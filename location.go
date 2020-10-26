@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/micheam/gmbapi/util/pointer"
+	"github.com/micheam/gmbapi/internal/util/pointer"
 )
 
 // LocationAccess ...
