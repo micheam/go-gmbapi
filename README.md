@@ -48,6 +48,11 @@ func main() {
 }
 ```
 
+The following directory contains other use examples.
+
+- [list accounts](example/list-accounts)
+- [list locations](example/list-all-locations)
+
 ## License
 TBD
 
