@@ -1,16 +1,20 @@
 package gmbapi
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/url"
 )
 
 func ExampleAccountAccess_List() {
+	ctx := context.Background()
 	client, _ := New()
-	accounts, _ := client.AccountAccess().List(url.Values{})
-	b, _ := json.Marshal(accounts)
-	fmt.Println(string(b))
+	accounts, _ := client.AccountAccess().List(ctx, url.Values{})
+	for account := range accounts {
+		b, _ := json.Marshal(account)
+		fmt.Println(string(b))
+	}
 	// will print all your accounts
 }
 
@@ -31,30 +35,33 @@ func (c *myCred) GetRefreshToken() string {
 }
 
 func ExampleAccountAccess_List_withcredential() {
-	var c Credential = &myCred{
-		clientID:     "my client id",
-		clientSecret: "my client secret",
-		refreshToken: "my refresh token",
-	}
-
+	var (
+		ctx            = context.Background()
+		c   Credential = &myCred{
+			clientID:     "my client id",
+			clientSecret: "my client secret",
+			refreshToken: "my refresh token",
+		}
+	)
 	client := &Client{Cred: c}
-	accounts, _ := client.AccountAccess().List(url.Values{})
-	b, _ := json.Marshal(accounts)
-	fmt.Println(string(b))
+	accounts, _ := client.AccountAccess().List(ctx, url.Values{})
+	for account := range accounts {
+		b, _ := json.Marshal(account)
+		fmt.Println(string(b))
+	}
 	// will print all your accounts
 }
 
 func ExampleLocationAccess_List() {
+	ctx := context.Background()
 	client, _ := New()
-	accounts, _ := client.AccountAccess().List(url.Values{})
-
-	// Print all Locations under account.
-	var locations []*Location
-	for _, acc := range accounts.Accounts {
+	accounts, _ := client.AccountAccess().List(ctx, url.Values{})
+	for acc := range accounts {
 		acc := acc
-		locs, _ := client.LocationAccess(acc).List(url.Values{})
-		locations = append(locations, locs.Locations...)
+		locs, _ := client.LocationAccess(acc).List(ctx, url.Values{})
+		for loc := range locs {
+			b, _ := json.Marshal(loc)
+			fmt.Println(string(b))
+		}
 	}
-	b, _ := json.Marshal(locations)
-	fmt.Println(string(b))
 }

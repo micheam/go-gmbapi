@@ -1,6 +1,7 @@
 package gmbapi
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -67,7 +68,7 @@ func doRequest(method, url string, values url.Values) ([]byte, error) {
 // TODO(micheam): May be useful to be able to specify externally.
 const maxRetry uint64 = 4
 
-func (c *Client) doRequest(method, _url string, body io.Reader, param url.Values) ([]byte, error) {
+func (c *Client) doRequest(ctx context.Context, method, _url string, body io.Reader, param url.Values) ([]byte, error) {
 	if c.Token == nil { // TODO(micheam): re-auth if Token expired.
 		var err error
 		var b []byte
@@ -89,7 +90,7 @@ func (c *Client) doRequest(method, _url string, body io.Reader, param url.Values
 	var result []byte
 	op := func() error {
 		var err error
-		req, err := http.NewRequest(method, _url, body)
+		req, err := http.NewRequestWithContext(ctx, method, _url, body)
 		if err != nil {
 			return fmt.Errorf("failed to create http request: %w", err)
 		}

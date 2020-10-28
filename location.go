@@ -1,13 +1,13 @@
 package gmbapi
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
-
-	"github.com/micheam/google-my-business-go/internal/util/pointer"
 )
 
 // LocationAccess ...
@@ -22,19 +22,45 @@ func (c *Client) LocationAccess(parent *Account) *LocationAccess {
 }
 
 // List ...
-func (a *LocationAccess) List(params url.Values) (*LocationList, error) {
-	parentName := pointer.StringPtrDeref(a.parent.Name, "")
-	_url := fmt.Sprintf("%s/%s/locations", BaseEndpoint, parentName)
-	// FIXME(micheam): hundle NextPageToken
-	b, err := a.client.doRequest(http.MethodGet, _url, nil, params)
-	if err != nil {
-		return nil, fmt.Errorf("failed to doRequest locations.list: %w", err)
+func (l *LocationAccess) List(ctx context.Context, params url.Values) (<-chan *Location, error) {
+	var stream = make(chan *Location, 100)
+	go func() {
+		defer close(stream)
+		var next *string = nil
+		for {
+			accs, err := l.list(ctx, next, params)
+			if err != nil {
+				log.Printf("failed to list accounts: %v\n", err)
+				return
+			}
+			for _, a := range accs.Locations {
+				stream <- a
+			}
+			next = accs.NextPageToken
+			if next == nil {
+				break
+			}
+		}
+	}()
+	return stream, nil
+}
+
+func (l *LocationAccess) list(ctx context.Context, nextPageToken *string, params url.Values) (*LocationList, error) {
+	// TODO(micheam): QPS Limit
+	//    maybe "golang.org/x/time/rate"
+	if nextPageToken != nil {
+		params.Add("pageToken", *nextPageToken)
 	}
-	var res = new(LocationList)
-	if err := json.Unmarshal(b, res); err != nil {
+	_url := BaseEndpoint + "/" + *l.parent.Name + "/locations"
+	b, err := l.client.doRequest(ctx, http.MethodGet, _url, nil, params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to doRequest accounts.list: %w", err)
+	}
+	var dat = new(LocationList)
+	if err := json.Unmarshal(b, dat); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal api response: %w", err)
 	}
-	return res, nil
+	return dat, nil
 }
 
 // LocationList ...

@@ -1,8 +1,10 @@
 package gmbapi
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -21,24 +23,50 @@ func (c *Client) AccountAccess() *AccountAccess {
 }
 
 // List ...
-func (a *AccountAccess) List(params url.Values) (*AccountsList, error) {
-	_url := "https://mybusiness.googleapis.com/v4/accounts/"
-	// FIXME(micheam): hundle NextPageToken
-	b, err := a.client.doRequest(http.MethodGet, _url, nil, params)
+func (a *AccountAccess) List(ctx context.Context, params url.Values) (<-chan *Account, error) {
+	var stream = make(chan *Account, 100)
+	go func() {
+		defer close(stream)
+		var next *string = nil
+		for {
+			accs, err := a.list(ctx, next, params)
+			if err != nil {
+				log.Printf("failed to list accounts: %v\n", err)
+				return
+			}
+			for _, a := range accs.Accounts {
+				stream <- a
+			}
+			next = accs.NextPageToken
+			if next == nil {
+				break
+			}
+		}
+	}()
+	return stream, nil
+}
+
+func (a *AccountAccess) list(ctx context.Context, nextPageToken *string, params url.Values) (*AccountList, error) {
+	// TODO(micheam): QPS Limit
+	//    maybe "golang.org/x/time/rate"
+	if nextPageToken != nil {
+		params.Add("pageToken", *nextPageToken)
+	}
+	b, err := a.client.doRequest(ctx, http.MethodGet, BaseEndpoint+"/accounts/", nil, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to doRequest accounts.list: %w", err)
 	}
-	var res = new(AccountsList)
-	if err := json.Unmarshal(b, res); err != nil {
+	var dat = new(AccountList)
+	if err := json.Unmarshal(b, dat); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal api response: %w", err)
 	}
-	return res, nil
+	return dat, nil
 }
 
-// AccountsList : accounts.list
-type AccountsList struct {
+// AccountList : accounts.list
+type AccountList struct {
 	Accounts      []*Account `json:"accounts"`
-	NextPageToken string     `json:"nextPageToken"`
+	NextPageToken *string    `json:"nextPageToken"`
 }
 
 // Account is a data for Account Resource of Google My Business API.
