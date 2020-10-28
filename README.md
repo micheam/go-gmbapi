@@ -14,19 +14,25 @@ $ go get github.com/micheam/google-my-business-go
 ```
 
 ## Usage
-```go
-// Print all Locations under account.
-func main() {
-	var (
-		clientID     = "<GOOGLEAPI_CLIENT_ID>"
-		clientSecret = "<GOOGLEAPI_CLIENT_SECRET>"
-		refreshToken = "<GOOGLEAPI_REFRESH_TOKEN>"
-	)
 
-	client, _ := New(clientID, clientSecret, refreshToken)
+```go
+package main
+
+import os
+import github.com/micheam/google-my-business-go
+
+// Print all Locations under account.
+func init() {
+	os.Setenv("GMB_CLIENT_ID", "THIS_IS_YOUR_CLIENT_ID")
+	os.Setenv("GMB_CLIENT_SECRET", "THIS_IS_YOUR_CLIENT_SECRET")
+	os.Setenv("GMB_REFRESH_TOKEN", "THIS_IS_YOUR_REFRESH_TOKEN")
+}
+
+func main() {
+	client, _ := gmbapi.New()
 	accounts, _ := client.AccountAccess().List(url.Values{})
 
-	var locations []*Location
+	var locations []*gmbapi.Location
 	for _, acc := range accounts.Accounts {
 		acc := acc
 		locs, _ := client.LocationAccess(acc).List(url.Values{})

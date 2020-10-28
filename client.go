@@ -10,7 +10,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/cenkalti/backoff"
+	"github.com/cenkalti/backoff/v4"
+	"github.com/micheam/google-my-business-go/internal/config"
 )
 
 // constants for call apis
@@ -28,30 +29,26 @@ type Token struct {
 	TokenType   string `json:"token_type"`
 }
 
+// Credential define credential info for GMB Client
+type Credential interface {
+	GetClientID() string
+	GetClientSecret() string
+	GetRefreshToken() string
+}
+
 // Client ...
 type Client struct {
+	Cred Credential
 	*Token
 }
 
 // New ...
-func New(clientID, clientSecret, refreshToken string) (*Client, error) {
-	var err error
-	var b []byte
-	if b, err = doRequest(
-		http.MethodPost, Oauth2Endpoint,
-		url.Values{
-			"client_id":     []string{clientID},
-			"client_secret": []string{clientSecret},
-			"grant_type":    []string{"refresh_token"},
-			"refresh_token": []string{refreshToken},
-		}); err != nil {
+func New() (*Client, error) {
+	c, err := config.Load()
+	if err != nil {
 		return nil, err
 	}
-	var token = new(Token)
-	if err = json.Unmarshal(b, token); err != nil {
-		return nil, err
-	}
-	return &Client{Token: token}, nil
+	return &Client{Cred: c}, nil
 }
 
 func doRequest(method, url string, values url.Values) ([]byte, error) {
@@ -71,11 +68,29 @@ func doRequest(method, url string, values url.Values) ([]byte, error) {
 // TODO(micheam): May be useful to be able to specify externally.
 const maxRetry uint64 = 4
 
-func (c *Client) doRequest(method, url string, body io.Reader, param url.Values) ([]byte, error) {
+func (c *Client) doRequest(method, _url string, body io.Reader, param url.Values) ([]byte, error) {
+	if c.Token == nil { // TODO(micheam): re-auth if Token expired.
+		var err error
+		var b []byte
+		if b, err = doRequest(
+			http.MethodPost, Oauth2Endpoint,
+			url.Values{
+				"client_id":     []string{c.Cred.GetClientID()},
+				"client_secret": []string{c.Cred.GetClientSecret()},
+				"grant_type":    []string{"refresh_token"},
+				"refresh_token": []string{c.Cred.GetRefreshToken()},
+			}); err != nil {
+			return nil, err
+		}
+		c.Token = new(Token)
+		if err = json.Unmarshal(b, c.Token); err != nil {
+			return nil, err
+		}
+	}
 	var result []byte
 	op := func() error {
 		var err error
-		req, err := http.NewRequest(method, url, body)
+		req, err := http.NewRequest(method, _url, body)
 		if err != nil {
 			return fmt.Errorf("failed to create http request: %w", err)
 		}
@@ -98,8 +113,8 @@ func (c *Client) doRequest(method, url string, body io.Reader, param url.Values)
 		log.Println(resp.StatusCode)
 		return nil
 	}
-	boff := backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetry)
-	if err := backoff.Retry(op, boff); err != nil {
+	bf := backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetry)
+	if err := backoff.Retry(op, bf); err != nil {
 		return nil, err
 	}
 	return result, nil

@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/micheam/gmbapi/internal/util/pointer"
+	"github.com/micheam/google-my-business-go/internal/util/pointer"
 )
 
 // LocationAccess ...

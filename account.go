@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/micheam/gmbapi/util"
+	"github.com/micheam/google-my-business-go/util"
 )
 
 // AccountAccess ...
