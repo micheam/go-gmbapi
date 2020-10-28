@@ -1,5 +1,9 @@
 # google-my-business-go
 
+**DO NOT USE THIS**
+This library was created to represent the idea of implementation. 
+It is not yet feature ready and should not be used.
+
 ## Requirements
 `go 1.14~`
 
