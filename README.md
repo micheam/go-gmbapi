@@ -18,15 +18,20 @@ $ go get github.com/micheam/google-my-business-go
 ```go
 package main
 
-import os
-import github.com/micheam/google-my-business-go
+import (
+	"encoding/json"
+	"fmt"
+	"net/url"
+	"os"
 
-// Print all Locations under account.
-func init() {
-	os.Setenv("GMB_CLIENT_ID", "THIS_IS_YOUR_CLIENT_ID")
-	os.Setenv("GMB_CLIENT_SECRET", "THIS_IS_YOUR_CLIENT_SECRET")
-	os.Setenv("GMB_REFRESH_TOKEN", "THIS_IS_YOUR_REFRESH_TOKEN")
-}
+	gmbapi "github.com/micheam/google-my-business-go"
+)
+
+// The following environment variables must be set
+//
+// - GMB_CLIENT_ID      string
+// - GMB_CLIENT_SECRET  string
+// - GMB_REFRESH_TOKEN  string
 
 func main() {
 	client, _ := gmbapi.New()
