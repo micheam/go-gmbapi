@@ -1,4 +1,4 @@
-module github.com/micheam/gmbapi
+module github.com/micheam/google-my-business-go
 
 go 1.15
 
