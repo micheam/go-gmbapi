@@ -34,17 +34,19 @@ import (
 // - GMB_REFRESH_TOKEN  string
 
 func main() {
+	ctx := context.Background()
 	client, _ := gmbapi.New()
-	accounts, _ := client.AccountAccess().List(url.Values{})
+	accounts, _ := client.AccountAccess().List(ctx, url.Values{})
 
-	var locations []*gmbapi.Location
-	for _, acc := range accounts.Accounts {
+	for acc := range accounts {
 		acc := acc
-		locs, _ := client.LocationAccess(acc).List(url.Values{})
-		locations = append(locations, locs.Locations...)
+
+		locs, _ := client.LocationAccess(acc).List(ctx, url.Values{})
+		for loc := range locs {
+			b, _ := json.Marshal(loc)
+			fmt.Println(string(b))
+		}
 	}
-	b, _ := json.Marshal(locations)
-	fmt.Println(string(b))
 }
 ```
 
