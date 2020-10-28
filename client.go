@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -110,7 +109,6 @@ func (c *Client) doRequest(method, _url string, body io.Reader, param url.Values
 		if resp.StatusCode >= http.StatusMultipleChoices {
 			return fmt.Errorf(string(result))
 		}
-		log.Println(resp.StatusCode)
 		return nil
 	}
 	bf := backoff.WithMaxRetries(backoff.NewExponentialBackOff(), maxRetry)
