@@ -28,15 +28,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var locations []*gmbapi.Location
 	for acc := range accounts {
 		acc := acc
-		locs, err := client.LocationAccess(acc).List(ctx, url.Values{})
-		if err != nil {
-			log.Fatal(err)
-		}
-		locations = append(locations, locs.Locations...)
+		b, _ := json.Marshal(acc)
+		fmt.Println(string(b))
 	}
-	b, _ := json.Marshal(locations)
-	fmt.Println(string(b))
 }

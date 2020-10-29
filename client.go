@@ -107,7 +107,10 @@ func (c *Client) doRequest(ctx context.Context, method, _url string, body io.Rea
 			return fmt.Errorf("failed to read response body: %w", err)
 		}
 
-		if resp.StatusCode >= http.StatusMultipleChoices {
+		if resp.StatusCode == http.StatusNotFound {
+			return ErrNotFound
+
+		} else if resp.StatusCode >= http.StatusMultipleChoices {
 			return fmt.Errorf(string(result))
 		}
 		return nil

@@ -45,6 +45,22 @@ func (l *LocationAccess) List(ctx context.Context, params url.Values) (<-chan *L
 	return stream, nil
 }
 
+// Get return the specified location. Returns ErrNotFound if the location does not exist.
+func (l *LocationAccess) Get(ctx context.Context, id LocationID) (*Location, error) {
+	// TODO(micheam): QPS Limit
+	//    maybe "golang.org/x/time/rate"
+	_url := BaseEndpoint + "/" + *l.parent.Name + "/locations/" + string(id)
+	b, err := l.client.doRequest(ctx, http.MethodGet, _url, nil, url.Values{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to doRequest accounts.get: %w", err)
+	}
+	var loc = new(Account)
+	if err := json.Unmarshal(b, loc); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal api response: %w", err)
+	}
+	return loc, nil
+}
+
 func (l *LocationAccess) list(ctx context.Context, nextPageToken *string, params url.Values) (*LocationList, error) {
 	// TODO(micheam): QPS Limit
 	//    maybe "golang.org/x/time/rate"
@@ -69,6 +85,9 @@ type LocationList struct {
 	NextPageToken *string     `json:"nextPageToken"`
 	TotalSize     *int        `json:"totalSize"`
 }
+
+// LocationID is a identifier of Location
+type LocationID string
 
 // Location is ...
 //
