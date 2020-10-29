@@ -46,6 +46,22 @@ func (a *AccountAccess) List(ctx context.Context, params url.Values) (<-chan *Ac
 	return stream, nil
 }
 
+// Get return the specified account. Returns ErrNotFound if the
+// account does not exist or if the caller does not have access rights to it.
+func (a *AccountAccess) Get(ctx context.Context, id AccountID) (*Account, error) {
+	// TODO(micheam): QPS Limit
+	//    maybe "golang.org/x/time/rate"
+	b, err := a.client.doRequest(ctx, http.MethodGet, BaseEndpoint+"/accounts/"+string(id), nil, url.Values{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to doRequest accounts.get: %w", err)
+	}
+	var acc = new(Account)
+	if err := json.Unmarshal(b, acc); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal api response: %w", err)
+	}
+	return acc, nil
+}
+
 func (a *AccountAccess) list(ctx context.Context, nextPageToken *string, params url.Values) (*AccountList, error) {
 	// TODO(micheam): QPS Limit
 	//    maybe "golang.org/x/time/rate"
@@ -68,6 +84,9 @@ type AccountList struct {
 	Accounts      []*Account `json:"accounts"`
 	NextPageToken *string    `json:"nextPageToken"`
 }
+
+// AccountID is a identifier of account
+type AccountID string
 
 // Account is a data for Account Resource of Google My Business API.
 type Account struct {
