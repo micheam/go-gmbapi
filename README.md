@@ -10,7 +10,7 @@ It is not yet feature ready and should not be used.
 
 ## Installation
 ```shell
-$ go get github.com/micheam/google-my-business-go
+$ go get github.com/micheam/go-gmbapi
 ```
 
 ## Usage
@@ -24,7 +24,7 @@ import (
 	"net/url"
 	"os"
 
-	gmbapi "github.com/micheam/google-my-business-go"
+	gmbapi "github.com/micheam/go-gmbapi"
 )
 
 // The following environment variables must be set
