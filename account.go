@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/micheam/google-my-business-go/util"
+	"github.com/micheam/go-gmbapi/util"
 )
 
 // AccountAccess ...

@@ -7,7 +7,7 @@ import (
 	"log"
 	"net/url"
 
-	gmbapi "github.com/micheam/google-my-business-go"
+	gmbapi "github.com/micheam/go-gmbapi"
 )
 
 func init() {

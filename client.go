@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/micheam/google-my-business-go/internal/config"
+	"github.com/micheam/go-gmbapi/internal/config"
 )
 
 // constants for call apis

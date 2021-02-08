@@ -1,4 +1,4 @@
-# google-my-business-go
+# go-gmbapi
 
 **!!DO NOT USE THIS!!**
 

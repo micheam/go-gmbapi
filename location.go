@@ -54,7 +54,7 @@ func (l *LocationAccess) Get(ctx context.Context, id LocationID) (*Location, err
 	if err != nil {
 		return nil, fmt.Errorf("failed to doRequest accounts.get: %w", err)
 	}
-	var loc = new(Account)
+	var loc = new(Location)
 	if err := json.Unmarshal(b, loc); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal api response: %w", err)
 	}
