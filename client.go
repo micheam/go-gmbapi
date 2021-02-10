@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/micheam/go-gmbapi/internal/config"
@@ -40,6 +41,7 @@ type Credential interface {
 // Client ...
 type Client struct {
 	Cred Credential
+	lock sync.RWMutex
 	*Token
 }
 
@@ -71,26 +73,12 @@ const maxRetry uint64 = 3
 
 func (c *Client) doRequest(ctx context.Context, method, _url string, body io.ReadSeeker, param url.Values) ([]byte, error) {
 	if c.Token == nil { // TODO(micheam): re-auth if Token expired.
-		var err error
-		var b []byte
-		if b, err = doRequest(
-			http.MethodPost, Oauth2Endpoint,
-			url.Values{
-				"client_id":     []string{c.Cred.GetClientID()},
-				"client_secret": []string{c.Cred.GetClientSecret()},
-				"grant_type":    []string{"refresh_token"},
-				"refresh_token": []string{c.Cred.GetRefreshToken()},
-			}); err != nil {
-			return nil, err
-		}
-		c.Token = new(Token)
-		if err = json.Unmarshal(b, c.Token); err != nil {
-			return nil, err
+		if err := c.tokenReflesh(); err != nil {
+			return nil, fmt.Errorf("failed to reflesh token: %w", err)
 		}
 	}
 
 	var result []byte
-
 	op := func() error {
 		var err error
 		if body != nil {
@@ -131,4 +119,25 @@ func (c *Client) doRequest(ctx context.Context, method, _url string, body io.Rea
 		return nil, err
 	}
 	return result, nil
+}
+
+func (c *Client) tokenReflesh() error {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	b, err := doRequest(http.MethodPost, Oauth2Endpoint, url.Values{
+		"client_id":     []string{c.Cred.GetClientID()},
+		"client_secret": []string{c.Cred.GetClientSecret()},
+		"grant_type":    []string{"refresh_token"},
+		"refresh_token": []string{c.Cred.GetRefreshToken()}})
+
+	if err != nil {
+		return fmt.Errorf("failed to do request: %w", err)
+	}
+
+	c.Token = new(Token)
+	if err = json.Unmarshal(b, c.Token); err != nil {
+		return fmt.Errorf("failed to ummarshal response: %w", err)
+	}
+	return nil
 }
