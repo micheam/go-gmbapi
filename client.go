@@ -64,7 +64,7 @@ func doRequest(method, url string, values url.Values) ([]byte, error) {
 const maxRetry uint64 = 3
 
 func (c *Client) doRequest(ctx context.Context, basetime time.Time, method, _url string, body io.ReadSeeker, param url.Values) ([]byte, error) {
-	if c.Token.Expired(basetime) {
+	if c.tokenExpired(basetime) {
 		if err := c.tokenReflesh(); err != nil {
 			return nil, fmt.Errorf("failed to reflesh token: %w", err)
 		}
@@ -111,6 +111,10 @@ func (c *Client) doRequest(ctx context.Context, basetime time.Time, method, _url
 		return nil, err
 	}
 	return result, nil
+}
+
+func (c *Client) tokenExpired(on time.Time) bool {
+	return c.Token.Expired(on)
 }
 
 func (c *Client) tokenReflesh() error {
