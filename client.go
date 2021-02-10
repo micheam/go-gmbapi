@@ -3,6 +3,7 @@ package gmbapi
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -66,7 +67,7 @@ func doRequest(method, url string, values url.Values) ([]byte, error) {
 }
 
 // TODO(micheam): May be useful to be able to specify externally.
-const maxRetry uint64 = 1
+const maxRetry uint64 = 3
 
 func (c *Client) doRequest(ctx context.Context, method, _url string, body io.ReadSeeker, param url.Values) ([]byte, error) {
 	if c.Token == nil { // TODO(micheam): re-auth if Token expired.
@@ -88,45 +89,40 @@ func (c *Client) doRequest(ctx context.Context, method, _url string, body io.Rea
 		}
 	}
 
-	{
-		// DEBUG
-		// b, err := io.ReadAll(body)
-		// if err != nil {
-		// 	return nil, fmt.Errorf("cant read body: %w", err)
-		// }
-		// fmt.Println(string(b))
-	}
-
 	var result []byte
+
 	op := func() error {
 		var err error
 		if body != nil {
 			if _, err := body.Seek(0, 0); err != nil {
-				return fmt.Errorf("failed to seek to head of body: %w", err)
+				err = fmt.Errorf("failed to seek to head of body: %w", err)
+				return backoff.Permanent(err)
 			}
 		}
 		req, err := http.NewRequestWithContext(ctx, method, _url, body)
 		if err != nil {
-			return fmt.Errorf("failed to create http request: %w", err)
+			err = fmt.Errorf("failed to create http request: %w", err)
+			return backoff.Permanent(err)
 		}
 		req.Header.Set("Authorization", "Bearer "+c.AccessToken)
 		req.URL.RawQuery = param.Encode()
 		resp, err := new(http.Client).Do(req)
 		if err != nil {
-			return fmt.Errorf("failed to do http-request: %w", err)
+			err = fmt.Errorf("failed to do http-request: %w", err)
+			return backoff.Permanent(err)
 		}
 		defer resp.Body.Close()
 
 		result, err = ioutil.ReadAll(resp.Body)
 		if err != nil {
-			return fmt.Errorf("failed to read response body: %w", err)
+			err = fmt.Errorf("failed to read response body: %w", err)
+			return backoff.Permanent(err)
 		}
 
-		if resp.StatusCode == http.StatusNotFound {
-			return ErrNotFound
-
-		} else if resp.StatusCode >= http.StatusMultipleChoices {
-			return fmt.Errorf(string(result))
+		if 300 <= resp.StatusCode && resp.StatusCode < 500 {
+			return backoff.Permanent(errors.New(string(result)))
+		} else if 500 <= resp.StatusCode {
+			return errors.New(string(result)) // !! Retry !!
 		}
 		return nil
 	}
