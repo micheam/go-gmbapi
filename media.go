@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 // MediaAccess ...
@@ -53,7 +54,7 @@ func (m *MediaAccess) list(ctx context.Context, nextPageToken *string, params ur
 		params.Add("pageToken", *nextPageToken)
 	}
 	_url := BaseEndpoint + "/" + *m.parent.Name + "/media"
-	b, err := m.client.doRequest(ctx, http.MethodGet, _url, nil, params)
+	b, err := m.client.doRequest(ctx, time.Now(), http.MethodGet, _url, nil, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to doRequest media.list: %w", err)
 	}
@@ -69,7 +70,7 @@ func (m *MediaAccess) Get(ctx context.Context, id string) (*MediaItem, error) {
 	// TODO(micheam): QPS Limit
 	//    maybe "golang.org/x/time/rate"
 	_url := BaseEndpoint + "/" + *m.parent.Name + "/media/" + id
-	b, err := m.client.doRequest(ctx, http.MethodGet, _url, nil, url.Values{})
+	b, err := m.client.doRequest(ctx, time.Now(), http.MethodGet, _url, nil, url.Values{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to doRequest media.get: %w", err)
 	}
@@ -91,7 +92,7 @@ func (m *MediaAccess) Create(ctx context.Context, item *MediaItem, params url.Va
 		return fmt.Errorf("failed to marshal MediaItem into json: %w", err)
 	}
 	var body io.ReadSeeker = bytes.NewReader(b)
-	res, err := m.client.doRequest(ctx, http.MethodPost, _url, body, params)
+	res, err := m.client.doRequest(ctx, time.Now(), http.MethodPost, _url, body, params)
 	if err != nil {
 		return fmt.Errorf("failed to doRequest media.create: %w", err)
 	}

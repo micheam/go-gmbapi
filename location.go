@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 // LocationAccess ...
@@ -50,7 +51,7 @@ func (l *LocationAccess) Get(ctx context.Context, id LocationID) (*Location, err
 	// TODO(micheam): QPS Limit
 	//    maybe "golang.org/x/time/rate"
 	_url := BaseEndpoint + "/" + *l.parent.Name + "/locations/" + string(id)
-	b, err := l.client.doRequest(ctx, http.MethodGet, _url, nil, url.Values{})
+	b, err := l.client.doRequest(ctx, time.Now(), http.MethodGet, _url, nil, url.Values{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to doRequest accounts.get: %w", err)
 	}
@@ -68,7 +69,7 @@ func (l *LocationAccess) list(ctx context.Context, nextPageToken *string, params
 		params.Add("pageToken", *nextPageToken)
 	}
 	_url := BaseEndpoint + "/" + *l.parent.Name + "/locations"
-	b, err := l.client.doRequest(ctx, http.MethodGet, _url, nil, params)
+	b, err := l.client.doRequest(ctx, time.Now(), http.MethodGet, _url, nil, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to doRequest accounts.list: %w", err)
 	}

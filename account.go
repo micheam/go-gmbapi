@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/micheam/go-gmbapi/util"
 )
@@ -51,7 +52,7 @@ func (a *AccountAccess) List(ctx context.Context, params url.Values) (<-chan *Ac
 func (a *AccountAccess) Get(ctx context.Context, id AccountID) (*Account, error) {
 	// TODO(micheam): QPS Limit
 	//    maybe "golang.org/x/time/rate"
-	b, err := a.client.doRequest(ctx, http.MethodGet, BaseEndpoint+"/accounts/"+string(id), nil, url.Values{})
+	b, err := a.client.doRequest(ctx, time.Now(), http.MethodGet, BaseEndpoint+"/accounts/"+string(id), nil, url.Values{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to doRequest accounts.get: %w", err)
 	}
@@ -68,7 +69,7 @@ func (a *AccountAccess) list(ctx context.Context, nextPageToken *string, params 
 	if nextPageToken != nil {
 		params.Add("pageToken", *nextPageToken)
 	}
-	b, err := a.client.doRequest(ctx, http.MethodGet, BaseEndpoint+"/accounts/", nil, params)
+	b, err := a.client.doRequest(ctx, time.Now(), http.MethodGet, BaseEndpoint+"/accounts/", nil, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to doRequest accounts.list: %w", err)
 	}

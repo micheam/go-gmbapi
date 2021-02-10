@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/micheam/go-gmbapi/internal/config"
@@ -21,15 +22,6 @@ var (
 	BaseEndpoint   string = "https://mybusiness.googleapis.com/v4"
 	Oauth2Endpoint string = "https://www.googleapis.com/oauth2/v4/token"
 )
-
-// Token ...
-type Token struct {
-	AccessToken string `json:"access_token"`
-	ExpiresIn   int64  `json:"expires_in"`
-	IDToken     string `json:"id_token"`
-	Scope       string `json:"scope"`
-	TokenType   string `json:"token_type"`
-}
 
 // Credential define credential info for GMB Client
 type Credential interface {
@@ -71,8 +63,8 @@ func doRequest(method, url string, values url.Values) ([]byte, error) {
 // TODO(micheam): May be useful to be able to specify externally.
 const maxRetry uint64 = 3
 
-func (c *Client) doRequest(ctx context.Context, method, _url string, body io.ReadSeeker, param url.Values) ([]byte, error) {
-	if c.Token == nil { // TODO(micheam): re-auth if Token expired.
+func (c *Client) doRequest(ctx context.Context, basetime time.Time, method, _url string, body io.ReadSeeker, param url.Values) ([]byte, error) {
+	if c.Token.Expired(basetime) {
 		if err := c.tokenReflesh(); err != nil {
 			return nil, fmt.Errorf("failed to reflesh token: %w", err)
 		}
