@@ -1,4 +1,4 @@
-package util
+package gmbapi
 
 // OrganizationInfo is an Additional Info stored for an organization.
 type OrganizationInfo struct {

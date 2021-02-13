@@ -9,8 +9,6 @@ import (
 	"net/url"
 	"strings"
 	"time"
-
-	"github.com/micheam/go-gmbapi/util"
 )
 
 // AccountAccess ...
@@ -91,14 +89,14 @@ type AccountID string
 
 // Account is a data for Account Resource of Google My Business API.
 type Account struct {
-	Name             *string                `json:"name"` //  the resource name, in the format 'accounts/{accountId}'.
-	AccountName      *string                `json:"accountName"`
-	Type             *AccountType           `json:"type"`
-	Role             *AccountRole           `json:"role"`
-	State            *AccountState          `json:"state"`
-	AccountNumber    *string                `json:"accountNumber"`
-	PermissionLevel  *PermissionLevel       `json:"permissionLevel"`
-	OrganizationInfo *util.OrganizationInfo `json:"organizationInfo"`
+	Name             string           `json:"name"` //  the resource name, in the format 'accounts/{accountId}'.
+	AccountName      string           `json:"accountName"`
+	Type             AccountType      `json:"type"`
+	Role             AccountRole      `json:"role"`
+	State            AccountState     `json:"state"`
+	AccountNumber    string           `json:"accountNumber"`
+	PermissionLevel  PermissionLevel  `json:"permissionLevel"`
+	OrganizationInfo OrganizationInfo `json:"organizationInfo"`
 }
 
 /*
