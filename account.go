@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -21,28 +20,31 @@ func (c *Client) AccountAccess() *AccountAccess {
 	return &AccountAccess{client: c}
 }
 
-// List ...
-func (a *AccountAccess) List(ctx context.Context, params url.Values) (<-chan *Account, error) {
-	var stream = make(chan *Account, 100)
+type AccountStreamChunk struct {
+	Accounts []*Account
+	Err      error
+}
+
+// Streaming ...
+func (a *AccountAccess) Streaming(ctx context.Context, params url.Values) <-chan AccountStreamChunk {
+	var stream = make(chan AccountStreamChunk, 0)
 	go func() {
 		defer close(stream)
 		var next *string = nil
 		for {
-			accs, err := a.list(ctx, next, params)
+			result, err := a.list(ctx, next, params)
 			if err != nil {
-				log.Printf("failed to list accounts: %v\n", err)
+				stream <- AccountStreamChunk{Err: fmt.Errorf("failed to list accounts: %w", err)}
 				return
 			}
-			for _, a := range accs.Accounts {
-				stream <- a
-			}
-			next = accs.NextPageToken
+			stream <- AccountStreamChunk{Accounts: result.Accounts}
+			next = result.NextPageToken
 			if next == nil {
 				break
 			}
 		}
 	}()
-	return stream, nil
+	return stream
 }
 
 // Get return the specified account. Returns ErrNotFound if the

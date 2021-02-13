@@ -7,13 +7,21 @@ import (
 	"net/url"
 )
 
-func ExampleAccountAccess_List() {
+func ExampleAccountAccess_Streaming() {
 	ctx := context.Background()
 	client, _ := New()
-	accounts, _ := client.AccountAccess().List(ctx, url.Values{})
-	for account := range accounts {
-		b, _ := json.Marshal(account)
-		fmt.Println(string(b))
+	accounts := client.AccountAccess().Streaming(ctx, url.Values{})
+
+	for chunk := range accounts {
+		if chunk.Err != nil {
+			fmt.Println(chunk.Err)
+			return
+		}
+		for i := range chunk.Accounts {
+			a := chunk.Accounts[i]
+			b, _ := json.Marshal(a)
+			fmt.Println(string(b))
+		}
 	}
 	// will print all your accounts
 }
@@ -34,7 +42,7 @@ func (c *myCred) GetRefreshToken() string {
 	return c.refreshToken
 }
 
-func ExampleAccountAccess_List_withcredential() {
+func ExampleAccountAccess_Streaming_withcredential() {
 	var (
 		ctx            = context.Background()
 		c   Credential = &myCred{
@@ -44,24 +52,13 @@ func ExampleAccountAccess_List_withcredential() {
 		}
 	)
 	client := &Client{Cred: c}
-	accounts, _ := client.AccountAccess().List(ctx, url.Values{})
-	for account := range accounts {
-		b, _ := json.Marshal(account)
-		fmt.Println(string(b))
-	}
-	// will print all your accounts
-}
-
-func ExampleLocationAccess_List() {
-	ctx := context.Background()
-	client, _ := New()
-	accounts, _ := client.AccountAccess().List(ctx, url.Values{})
-	for acc := range accounts {
-		acc := acc
-		locs, _ := client.LocationAccess(acc).List(ctx, url.Values{})
-		for loc := range locs {
-			b, _ := json.Marshal(loc)
+	accounts := client.AccountAccess().Streaming(ctx, url.Values{})
+	for chunk := range accounts {
+		for i := range chunk.Accounts {
+			a := chunk.Accounts[i]
+			b, _ := json.Marshal(a)
 			fmt.Println(string(b))
 		}
 	}
+	// will print all your accounts
 }
