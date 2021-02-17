@@ -20,31 +20,22 @@ func (c *Client) AccountAccess() *AccountAccess {
 	return &AccountAccess{client: c}
 }
 
-type AccountStreamChunk struct {
-	Accounts []*Account
-	Err      error
-}
-
-// Streaming ...
-func (a *AccountAccess) Streaming(ctx context.Context, params url.Values) <-chan AccountStreamChunk {
-	var stream = make(chan AccountStreamChunk, 0)
-	go func() {
-		defer close(stream)
-		var next *string = nil
-		for {
-			result, err := a.list(ctx, next, params)
-			if err != nil {
-				stream <- AccountStreamChunk{Err: fmt.Errorf("failed to list accounts: %w", err)}
-				return
-			}
-			stream <- AccountStreamChunk{Accounts: result.Accounts}
-			next = result.NextPageToken
-			if next == nil {
-				break
-			}
+// List ...
+func (a *AccountAccess) List(ctx context.Context, params url.Values) ([]*Account, error) {
+	var list = make([]*Account, 0)
+	var next *string = nil
+	for {
+		result, err := a.list(ctx, next, params)
+		if err != nil {
+			return nil, err
 		}
-	}()
-	return stream
+		list = append(list, result.Accounts...)
+		next = result.NextPageToken
+		if next == nil {
+			break
+		}
+	}
+	return list, nil
 }
 
 // Get return the specified account. Returns ErrNotFound if the
@@ -99,6 +90,11 @@ type Account struct {
 	AccountNumber    string           `json:"accountNumber"`
 	PermissionLevel  PermissionLevel  `json:"permissionLevel"`
 	OrganizationInfo OrganizationInfo `json:"organizationInfo"`
+}
+
+func (a *Account) ID() string {
+	s := strings.Split(a.Name, "/")
+	return s[len(s)-1]
 }
 
 /*

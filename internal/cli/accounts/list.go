@@ -1,9 +1,9 @@
 package accounts
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/url"
+	"os"
 
 	gmbapi "github.com/micheam/go-gmbapi"
 	"github.com/urfave/cli/v2"
@@ -12,28 +12,21 @@ import (
 var list = &cli.Command{
 	Name:    "list",
 	Aliases: []string{"ls"},
-	Usage:   "list available accounts",
+	Usage:   "listing all available accounts",
 	Action: func(c *cli.Context) error {
 		client, err := gmbapi.New()
 		if err != nil {
-			return fmt.Errorf("can't create gmbapi client: %w", err)
+			return fmt.Errorf("failed to  create gmbapi client: %w", err)
 		}
-		accounts := client.AccountAccess().Streaming(c.Context, url.Values{})
+		accounts, err := client.AccountAccess().List(c.Context, url.Values{})
 		if err != nil {
 			return fmt.Errorf("failed to list accounts: %w", err)
 		}
-
-		for chunk := range accounts {
-			if chunk.Err != nil {
-				return chunk.Err
-			}
-			for i := range chunk.Accounts {
-				acc := chunk.Accounts[i]
-				b, err := json.Marshal(acc)
-				if err != nil {
-					return fmt.Errorf("account(number=%s): %w", acc.AccountNumber, err)
-				}
-				fmt.Println(string(b))
+		p, out := GetPresenter(c), os.Stdout
+		for i := range accounts {
+			if err := p.Handle(out, *accounts[i]); err != nil {
+				return fmt.Errorf("account(number=%s): %w",
+					accounts[i].AccountNumber, err)
 			}
 		}
 		return nil

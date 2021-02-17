@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/micheam/go-gmbapi/internal/cli/accounts"
@@ -10,7 +11,11 @@ import (
 var Version string = "0.1.0"
 
 func main() {
-	newApp().Run(os.Args)
+	err := newApp().Run(os.Args)
+	if err != nil {
+		fmt.Printf("ERROR: %s\n", err.Error())
+		os.Exit(1)
+	}
 }
 
 func newApp() *cli.App {
@@ -22,6 +27,14 @@ func newApp() *cli.App {
 		{
 			Name:  "Michito Maeda",
 			Email: "michito.maeda@gmail.com",
+		},
+	}
+	app.Flags = []cli.Flag{
+		&cli.StringFlag{
+			Name:        "output",
+			Aliases:     []string{"o"},
+			DefaultText: "text",
+			Usage:       "formatting `style` for output. (text|json)",
 		},
 	}
 	app.Commands = commands
