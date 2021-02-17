@@ -31,10 +31,10 @@ func newApp() *cli.App {
 	}
 	app.Flags = []cli.Flag{
 		&cli.StringFlag{
-			Name:        "output",
-			Aliases:     []string{"o"},
-			DefaultText: "text",
-			Usage:       "formatting `style` for output. (text|json)",
+			Name:    "output",
+			Aliases: []string{"o"},
+			Value:   "text",
+			Usage:   "formatting `style` for output. (text|json)",
 		},
 	}
 	app.Commands = commands

@@ -24,7 +24,7 @@ var list = &cli.Command{
 		}
 		p, out := GetPresenter(c), os.Stdout
 		for i := range accounts {
-			if err := p.Handle(out, *accounts[i]); err != nil {
+			if err := p.Handle(out, accounts[i]); err != nil {
 				return fmt.Errorf("account(number=%s): %w",
 					accounts[i].AccountNumber, err)
 			}

@@ -40,10 +40,13 @@ func (a *AccountAccess) List(ctx context.Context, params url.Values) ([]*Account
 
 // Get return the specified account. Returns ErrNotFound if the
 // account does not exist or if the caller does not have access rights to it.
-func (a *AccountAccess) Get(ctx context.Context, id AccountID) (*Account, error) {
-	// TODO(micheam): QPS Limit
-	//    maybe "golang.org/x/time/rate"
-	b, err := a.client.doRequest(ctx, time.Now(), http.MethodGet, BaseEndpoint+"/accounts/"+string(id), nil, url.Values{})
+//
+// name : 'accounts/${account_id}'
+func (a *AccountAccess) Get(ctx context.Context, name string) (*Account, error) {
+	// TODO(micheam): QPS Limit with "golang.org/x/time/rate"
+	b, err := a.client.doRequest(
+		ctx, time.Now(), http.MethodGet,
+		strings.Join([]string{BaseEndpoint, name}, "/"), nil, url.Values{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to doRequest accounts.get: %w", err)
 	}
@@ -92,9 +95,9 @@ type Account struct {
 	OrganizationInfo OrganizationInfo `json:"organizationInfo"`
 }
 
-func (a *Account) ID() string {
+func (a *Account) ID() AccountID {
 	s := strings.Split(a.Name, "/")
-	return s[len(s)-1]
+	return AccountID(s[len(s)-1])
 }
 
 /*

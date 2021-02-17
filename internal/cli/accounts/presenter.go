@@ -12,7 +12,7 @@ import (
 )
 
 type Presenter interface {
-	Handle(out io.Writer, a gmbapi.Account) error
+	Handle(out io.Writer, a *gmbapi.Account) error
 }
 
 func GetPresenter(c *cli.Context) Presenter {
@@ -29,14 +29,14 @@ func GetPresenter(c *cli.Context) Presenter {
 
 type TextPresenter struct{}
 
-func (*TextPresenter) Handle(out io.Writer, a gmbapi.Account) (err error) {
+func (*TextPresenter) Handle(out io.Writer, a *gmbapi.Account) (err error) {
 	_, err = fmt.Fprintf(out, "%+20s\t%s\n", a.ID(), a.AccountName)
 	return
 }
 
 type JsonPresenter struct{}
 
-func (*JsonPresenter) Handle(out io.Writer, a gmbapi.Account) error {
+func (*JsonPresenter) Handle(out io.Writer, a *gmbapi.Account) error {
 	b, err := json.Marshal(a)
 	if err != nil {
 		return err
