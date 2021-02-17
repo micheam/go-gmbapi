@@ -3,6 +3,7 @@ package gmbapi
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -98,6 +99,20 @@ type Account struct {
 func (a *Account) ID() AccountID {
 	s := strings.Split(a.Name, "/")
 	return AccountID(s[len(s)-1])
+}
+
+var ErrInvalidAccountName = errors.New("invalid account name")
+
+// TODO(micheam): move under package gmbapi
+func ParseAccountName(s string) (accountName string, err error) {
+	ss := strings.Split(s, "/")
+	if len(ss) > 0 {
+		if ss[0] != "accounts" {
+			return "", ErrInvalidAccountName
+		}
+		return s, nil
+	}
+	return fmt.Sprintf("accounts/%s", s), nil
 }
 
 /*

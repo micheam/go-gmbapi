@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/micheam/go-gmbapi/internal/cli/accounts"
+	"github.com/micheam/go-gmbapi/internal/cli/locations"
 	"github.com/urfave/cli/v2"
 )
 
@@ -43,4 +44,5 @@ func newApp() *cli.App {
 
 var commands = []*cli.Command{
 	accounts.Commands,
+	locations.Commands,
 }

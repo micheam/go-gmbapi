@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -23,27 +22,21 @@ func (c *Client) LocationAccess(parent *Account) *LocationAccess {
 }
 
 // List ...
-func (l *LocationAccess) List(ctx context.Context, params url.Values) (<-chan *Location, error) {
-	var stream = make(chan *Location, 100)
-	go func() {
-		defer close(stream)
-		var next *string = nil
-		for {
-			accs, err := l.list(ctx, next, params)
-			if err != nil {
-				log.Printf("failed to list accounts: %v\n", err)
-				return
-			}
-			for _, a := range accs.Locations {
-				stream <- a
-			}
-			next = accs.NextPageToken
-			if next == nil {
-				break
-			}
+func (l *LocationAccess) List(ctx context.Context, params url.Values) ([]*Location, error) {
+	var list = make([]*Location, 0)
+	var next *string = nil
+	for {
+		locList, err := l.list(ctx, next, params)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list locations: %w", err)
 		}
-	}()
-	return stream, nil
+		list = append(list, locList.Locations...)
+		next = locList.NextPageToken
+		if next == nil {
+			break
+		}
+	}
+	return list, nil
 }
 
 // Get return the specified location. Returns ErrNotFound if the location does not exist.
@@ -95,10 +88,15 @@ type LocationID string
 // TODO(mieahcm): add other fields
 //    https://developers.google.com/my-business/reference/rest/v4/accounts.locations?hl=ja#Location
 type Location struct {
-	Name         *string `json:"name"`
-	LocationName *string `json:"locationName"`
-	StoreCode    *string `json:"storeCode"`
-	PrimaryPhone *string `json:"primaryPhone"`
+	Name         string `json:"name"`
+	LocationName string `json:"locationName"`
+	StoreCode    string `json:"storeCode"`
+	PrimaryPhone string `json:"primaryPhone"`
+}
+
+func (loc *Location) ID() LocationID {
+	s := strings.Split(loc.Name, "/")
+	return LocationID(s[len(s)-1])
 }
 
 // StarRating ...

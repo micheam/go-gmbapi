@@ -53,7 +53,7 @@ func (m *MediaAccess) list(ctx context.Context, nextPageToken *string, params ur
 	if nextPageToken != nil {
 		params.Add("pageToken", *nextPageToken)
 	}
-	_url := BaseEndpoint + "/" + *m.parent.Name + "/media"
+	_url := BaseEndpoint + "/" + m.parent.Name + "/media"
 	b, err := m.client.doRequest(ctx, time.Now(), http.MethodGet, _url, nil, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to doRequest media.list: %w", err)
@@ -69,7 +69,7 @@ func (m *MediaAccess) list(ctx context.Context, nextPageToken *string, params ur
 func (m *MediaAccess) Get(ctx context.Context, id string) (*MediaItem, error) {
 	// TODO(micheam): QPS Limit
 	//    maybe "golang.org/x/time/rate"
-	_url := BaseEndpoint + "/" + *m.parent.Name + "/media/" + id
+	_url := BaseEndpoint + "/" + m.parent.Name + "/media/" + id
 	b, err := m.client.doRequest(ctx, time.Now(), http.MethodGet, _url, nil, url.Values{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to doRequest media.get: %w", err)
@@ -84,7 +84,7 @@ func (m *MediaAccess) Get(ctx context.Context, id string) (*MediaItem, error) {
 func (m *MediaAccess) Create(ctx context.Context, item *MediaItem, params url.Values) error {
 	// TODO(micheam): QPS Limit
 	//    maybe "golang.org/x/time/rate"
-	_url := BaseEndpoint + "/" + *m.parent.Name + "/media"
+	_url := BaseEndpoint + "/" + m.parent.Name + "/media"
 
 	// Request Body
 	b, err := json.Marshal(item)
