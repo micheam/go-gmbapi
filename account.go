@@ -106,13 +106,20 @@ var ErrInvalidAccountName = errors.New("invalid account name")
 // TODO(micheam): move under package gmbapi
 func ParseAccountName(s string) (accountName string, err error) {
 	ss := strings.Split(s, "/")
-	if len(ss) > 0 {
+	switch len(ss) {
+	case 1:
+		return fmt.Sprintf("accounts/%s", s), nil
+	case 2:
 		if ss[0] != "accounts" {
 			return "", ErrInvalidAccountName
 		}
 		return s, nil
+	default:
+		if ss[0] != "accounts" {
+			return "", ErrInvalidAccountName
+		}
+		return strings.Join(ss[0:1], "/"), nil
 	}
-	return fmt.Sprintf("accounts/%s", s), nil
 }
 
 /*

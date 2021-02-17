@@ -40,10 +40,10 @@ func (l *LocationAccess) List(ctx context.Context, params url.Values) ([]*Locati
 }
 
 // Get return the specified location. Returns ErrNotFound if the location does not exist.
-func (l *LocationAccess) Get(ctx context.Context, id LocationID) (*Location, error) {
+func (l *LocationAccess) Get(ctx context.Context, name string) (*Location, error) {
 	// TODO(micheam): QPS Limit
 	//    maybe "golang.org/x/time/rate"
-	_url := BaseEndpoint + "/" + l.parent.Name + "/locations/" + string(id)
+	_url := strings.Join([]string{BaseEndpoint, name}, "/")
 	b, err := l.client.doRequest(ctx, time.Now(), http.MethodGet, _url, nil, url.Values{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to doRequest accounts.get: %w", err)
