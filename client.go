@@ -46,8 +46,8 @@ func New() (*Client, error) {
 	return &Client{Cred: c}, nil
 }
 
-func doRequest(method, url string, values url.Values) ([]byte, error) {
-	req, err := http.NewRequest(method, url, strings.NewReader(values.Encode()))
+func doRequest(ctx context.Context, method, url string, values url.Values) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, method, url, strings.NewReader(values.Encode()))
 	if err != nil {
 		return []byte{}, err
 	}
@@ -65,7 +65,7 @@ const maxRetry uint64 = 3
 
 func (c *Client) doRequest(ctx context.Context, basetime time.Time, method, _url string, body io.ReadSeeker, param url.Values) ([]byte, error) {
 	if c.tokenExpired(basetime) {
-		if err := c.tokenReflesh(); err != nil {
+		if err := c.tokenReflesh(ctx); err != nil {
 			return nil, fmt.Errorf("failed to reflesh token: %w", err)
 		}
 	}
@@ -117,11 +117,11 @@ func (c *Client) tokenExpired(on time.Time) bool {
 	return c.Token.Expired(on)
 }
 
-func (c *Client) tokenReflesh() error {
+func (c *Client) tokenReflesh(ctx context.Context) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	b, err := doRequest(http.MethodPost, Oauth2Endpoint, url.Values{
+	b, err := doRequest(ctx, http.MethodPost, Oauth2Endpoint, url.Values{
 		"client_id":     []string{c.Cred.GetClientID()},
 		"client_secret": []string{c.Cred.GetClientSecret()},
 		"grant_type":    []string{"refresh_token"},
