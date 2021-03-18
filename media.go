@@ -103,7 +103,7 @@ func (m *MediaAccess) Delete(ctx context.Context, item *MediaItem) error {
 	_url := BaseEndpoint + "/" + item.Name
 	res, err := m.client.doRequest(ctx, time.Now(), http.MethodDelete, _url, nil, url.Values{})
 	if err != nil {
-		return fmt.Errorf("failed to doRequest media.create: %w", err)
+		return fmt.Errorf("failed to doRequest media.delete: %w", err)
 	}
 	err = json.Unmarshal(res, item)
 	if err != nil {
