@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -103,6 +104,21 @@ func (m *MediaAccess) Create(ctx context.Context, item *MediaItem, params url.Va
 	return nil
 }
 
+func (m *MediaAccess) Delete(ctx context.Context, item *MediaItem) error {
+	// TODO(micheam): QPS Limit
+	//    maybe "golang.org/x/time/rate"
+	_url := BaseEndpoint + "/" + item.Name
+	res, err := m.client.doRequest(ctx, time.Now(), http.MethodDelete, _url, nil, url.Values{})
+	if err != nil {
+		return fmt.Errorf("failed to doRequest media.create: %w", err)
+	}
+	err = json.Unmarshal(res, item)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal api response: %w", err)
+	}
+	return nil
+}
+
 // MediaList ...
 type MediaList struct {
 	Items               []*MediaItem `json:"mediaItems"`
@@ -110,14 +126,19 @@ type MediaList struct {
 	NextPageToken       *string      `json:"nextPageToken"`
 }
 
-// MediaID is a identifier of Media
-type MediaID string
+// MediaItemID is a identifier of Media
+type MediaItemID string
+
+func (m *MediaItem) ID() MediaItemID {
+	s := strings.Split(m.Name, "/")
+	return MediaItemID(s[len(s)-1])
+}
 
 // MediaItem is ...
 //
 // https://developers.google.com/my-business/reference/rest/v4/accounts.locations.media?hl=ja#MediaItem
 type MediaItem struct {
-	Name                *string             `json:"name"`
+	Name                string              `json:"name"`
 	Format              *MediaFormat        `json:"mediaFormat"` // emun: MediaFormat
 	LocationAssociation LocationAssociation `json:"locationAssociation"`
 	GoogleUrl           *string             `json:"googleUrl"`
