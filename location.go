@@ -3,6 +3,7 @@ package gmbapi
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -19,6 +20,29 @@ type LocationAccess struct {
 // LocationAccess ...
 func (c *Client) LocationAccess(parent *Account) *LocationAccess {
 	return &LocationAccess{parent: parent, client: c}
+}
+
+var ErrInvalidLocationName = errors.New("invalid location name")
+
+// ParseLocationName parse locationName-like string into locationName
+//
+// The supported string formats are as below.
+//
+// - {locationId}
+// - locations/{locationId}
+func (l *LocationAccess) ParseLocationName(s string) (locationName string, err error) {
+	ss := strings.Split(s, "/")
+	switch len(ss) {
+	case 1: // {locationId}
+		return strings.Join([]string{l.parent.Name, "locations", s}, "/"), nil
+	case 2: // locations/{locationId}
+		if ss[0] != "locations" {
+			return "", ErrInvalidLocationName
+		}
+		return s, nil
+	default:
+		return "", ErrInvalidLocationName
+	}
 }
 
 // List ...

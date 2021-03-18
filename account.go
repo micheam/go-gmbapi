@@ -103,7 +103,6 @@ func (a *Account) ID() AccountID {
 
 var ErrInvalidAccountName = errors.New("invalid account name")
 
-// TODO(micheam): move under package gmbapi
 func ParseAccountName(s string) (accountName string, err error) {
 	ss := strings.Split(s, "/")
 	switch len(ss) {
