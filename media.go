@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -25,27 +24,21 @@ func (c *Client) MediaAccess(parent *Location) *MediaAccess {
 }
 
 // List ...
-func (m *MediaAccess) List(ctx context.Context, params url.Values) (<-chan *MediaItem, error) {
-	var stream = make(chan *MediaItem, 100)
-	go func() {
-		defer close(stream)
-		var next *string = nil
-		for {
-			mediaList, err := m.list(ctx, next, params)
-			if err != nil {
-				log.Printf("failed to list mediaItems: %v\n", err)
-				return
-			}
-			for _, a := range mediaList.Items {
-				stream <- a
-			}
-			next = mediaList.NextPageToken
-			if next == nil {
-				break
-			}
+func (m *MediaAccess) List(ctx context.Context, params url.Values) ([]*MediaItem, error) {
+	var list = make([]*MediaItem, 0)
+	var next *string = nil
+	for {
+		mediaList, err := m.list(ctx, next, params)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list locations: %w", err)
 		}
-	}()
-	return stream, nil
+		list = append(list, mediaList.Items...)
+		next = mediaList.NextPageToken
+		if next == nil {
+			break
+		}
+	}
+	return list, nil
 }
 
 func (m *MediaAccess) list(ctx context.Context, nextPageToken *string, params url.Values) (*MediaList, error) {
