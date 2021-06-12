@@ -2,8 +2,8 @@
 
 **!!DO NOT USE THIS!!**
 
-This library was created to represent the idea of implementation. 
-It is not yet feature ready and should not be used.
+This library was created to represent an implementation idea. It is not yet fully functional, so please do not use it.   
+-> It is already archived and no maintenance is planned.
 
 ## Requirements
 `go 1.14~`
