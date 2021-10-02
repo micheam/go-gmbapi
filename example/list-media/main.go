@@ -42,7 +42,7 @@ func main() {
 	media := client.MediaAccess(&gmbapi.Location{Name: &parent})
 	mediaItems, err := media.List(ctx, nil)
 	if err != nil {
-		fmt.Printf("failed to get mediaItems: %s\n", err.Error())
+		fmt.Printf("failed to list mediaItems: %s\n", err.Error())
 		os.Exit(1)
 	}
 	for item := range mediaItems {

@@ -66,9 +66,9 @@ func doRequest(method, url string, values url.Values) ([]byte, error) {
 }
 
 // TODO(micheam): May be useful to be able to specify externally.
-const maxRetry uint64 = 4
+const maxRetry uint64 = 1
 
-func (c *Client) doRequest(ctx context.Context, method, _url string, body io.Reader, param url.Values) ([]byte, error) {
+func (c *Client) doRequest(ctx context.Context, method, _url string, body io.ReadSeeker, param url.Values) ([]byte, error) {
 	if c.Token == nil { // TODO(micheam): re-auth if Token expired.
 		var err error
 		var b []byte
@@ -87,9 +87,24 @@ func (c *Client) doRequest(ctx context.Context, method, _url string, body io.Rea
 			return nil, err
 		}
 	}
+
+	{
+		// DEBUG
+		// b, err := io.ReadAll(body)
+		// if err != nil {
+		// 	return nil, fmt.Errorf("cant read body: %w", err)
+		// }
+		// fmt.Println(string(b))
+	}
+
 	var result []byte
 	op := func() error {
 		var err error
+		if body != nil {
+			if _, err := body.Seek(0, 0); err != nil {
+				return fmt.Errorf("failed to seek to head of body: %w", err)
+			}
+		}
 		req, err := http.NewRequestWithContext(ctx, method, _url, body)
 		if err != nil {
 			return fmt.Errorf("failed to create http request: %w", err)

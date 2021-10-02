@@ -1,9 +1,11 @@
 package gmbapi
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -21,13 +23,13 @@ func (c *Client) MediaAccess(parent *Location) *MediaAccess {
 }
 
 // List ...
-func (l *MediaAccess) List(ctx context.Context, params url.Values) (<-chan *MediaItem, error) {
+func (m *MediaAccess) List(ctx context.Context, params url.Values) (<-chan *MediaItem, error) {
 	var stream = make(chan *MediaItem, 100)
 	go func() {
 		defer close(stream)
 		var next *string = nil
 		for {
-			mediaList, err := l.list(ctx, next, params)
+			mediaList, err := m.list(ctx, next, params)
 			if err != nil {
 				log.Printf("failed to list mediaItems: %v\n", err)
 				return
@@ -44,14 +46,14 @@ func (l *MediaAccess) List(ctx context.Context, params url.Values) (<-chan *Medi
 	return stream, nil
 }
 
-func (l *MediaAccess) list(ctx context.Context, nextPageToken *string, params url.Values) (*MediaList, error) {
+func (m *MediaAccess) list(ctx context.Context, nextPageToken *string, params url.Values) (*MediaList, error) {
 	// TODO(micheam): QPS Limit
 	//    maybe "golang.org/x/time/rate"
 	if nextPageToken != nil {
 		params.Add("pageToken", *nextPageToken)
 	}
-	_url := BaseEndpoint + "/" + *l.parent.Name + "/media"
-	b, err := l.client.doRequest(ctx, http.MethodGet, _url, nil, params)
+	_url := BaseEndpoint + "/" + *m.parent.Name + "/media"
+	b, err := m.client.doRequest(ctx, http.MethodGet, _url, nil, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to doRequest media.list: %w", err)
 	}
@@ -60,6 +62,44 @@ func (l *MediaAccess) list(ctx context.Context, nextPageToken *string, params ur
 		return nil, fmt.Errorf("failed to unmarshal api response: %w", err)
 	}
 	return dat, nil
+}
+
+// Get ...
+func (m *MediaAccess) Get(ctx context.Context, id string) (*MediaItem, error) {
+	// TODO(micheam): QPS Limit
+	//    maybe "golang.org/x/time/rate"
+	_url := BaseEndpoint + "/" + *m.parent.Name + "/media/" + id
+	b, err := m.client.doRequest(ctx, http.MethodGet, _url, nil, url.Values{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to doRequest media.get: %w", err)
+	}
+	var media = new(MediaItem)
+	if err := json.Unmarshal(b, media); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal api response: %w", err)
+	}
+	return media, nil
+}
+
+func (m *MediaAccess) Create(ctx context.Context, item *MediaItem, params url.Values) error {
+	// TODO(micheam): QPS Limit
+	//    maybe "golang.org/x/time/rate"
+	_url := BaseEndpoint + "/" + *m.parent.Name + "/media"
+
+	// Request Body
+	b, err := json.Marshal(item)
+	if err != nil {
+		return fmt.Errorf("failed to marshal MediaItem into json: %w", err)
+	}
+	var body io.ReadSeeker = bytes.NewReader(b)
+	res, err := m.client.doRequest(ctx, http.MethodPost, _url, body, params)
+	if err != nil {
+		return fmt.Errorf("failed to doRequest media.create: %w", err)
+	}
+	err = json.Unmarshal(res, item)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal api response: %w", err)
+	}
+	return nil
 }
 
 // MediaList ...
@@ -77,7 +117,7 @@ type MediaID string
 // https://developers.google.com/my-business/reference/rest/v4/accounts.locations.media?hl=ja#MediaItem
 type MediaItem struct {
 	Name                *string             `json:"name"`
-	Format              *string             `json:"mediaFormat"` // emun: MediaFormat
+	Format              *MediaFormat        `json:"mediaFormat"` // emun: MediaFormat
 	LocationAssociation LocationAssociation `json:"locationAssociation"`
 	GoogleUrl           *string             `json:"googleUrl"`
 	ThumbnailUrl        *string             `json:"thumbnailUrl"`
@@ -88,12 +128,18 @@ type MediaItem struct {
 	Description         *string             `json:"description"`
 
 	// Union field data can be only one of the following:
-	Src     *string          `json:"sourceUrl"`
-	DataRef MediaItemDataRef `json:"dataRef"`
+	Src     *string          `json:"sourceUrl,omitempty"`
+	DataRef MediaItemDataRef `json:"dataRef,omitempty"`
 }
 
 type Dimensions interface{}
-type LocationAssociation interface{}
+type LocationAssociation struct {
+	Category        MediaItemCategory `json:"category"`
+	PriceListItemID *string           `json:"priceListItemId"`
+}
 type MediaInsights interface{}
 type Attribution interface{}
 type MediaItemDataRef interface{}
+
+type MediaFormat string
+type MediaItemCategory string
