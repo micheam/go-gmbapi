@@ -79,9 +79,9 @@ type MediaItem struct {
 	Name                *string             `json:"name"`
 	Format              *string             `json:"mediaFormat"` // emun: MediaFormat
 	LocationAssociation LocationAssociation `json:"locationAssociation"`
-	googleUrl           *string             "googleUrl"
-	thumbnailUrl        *string             "thumbnailUrl"
-	createTime          *string             "createTime"
+	GoogleUrl           *string             `json:"googleUrl"`
+	ThumbnailUrl        *string             `json:"thumbnailUrl"`
+	CreateTime          *string             `json:"createTime"`
 	Dimensions          interface{}         `json:"dimensions"`
 	Insights            MediaInsights       `json:"insights"`
 	Attribution         Attribution         `json:"attribution"`
@@ -89,7 +89,7 @@ type MediaItem struct {
 
 	// Union field data can be only one of the following:
 	Src     *string          `json:"sourceUrl"`
-	DataRef MediaItemDataRef `json:"dataRef":`
+	DataRef MediaItemDataRef `json:"dataRef"`
 }
 
 type Dimensions interface{}
